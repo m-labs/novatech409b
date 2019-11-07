@@ -9,8 +9,8 @@ import os
 import asyncio
 
 from novatech409b.driver import Novatech409B
-from artiq.protocols.pc_rpc import simple_server_loop
-from artiq.tools import *
+from sipyco.pc_rpc import simple_server_loop
+from sipyco import common_args
 
 
 logger = logging.getLogger(__name__)
@@ -19,20 +19,20 @@ logger = logging.getLogger(__name__)
 def get_argparser():
     parser = argparse.ArgumentParser(
         description="ARTIQ controller for the Novatech 409B 4-channel DDS box")
-    simple_network_args(parser, 3254)
+    common_args.simple_network_args(parser, 3254)
     parser.add_argument(
         "-d", "--device", default=None,
         help="serial port.")
     parser.add_argument(
         "--simulation", action="store_true",
         help="Put the driver in simulation mode, even if --device is used.")
-    add_common_args(parser)
+    common_args.verbosity_args(parser)
     return parser
 
 
 def main():
     args = get_argparser().parse_args()
-    init_logger(args)
+    common_args.init_logger_from_args(args)
 
     if os.name == "nt":
         asyncio.set_event_loop(asyncio.ProactorEventLoop())
@@ -46,7 +46,7 @@ def main():
     asyncio.get_event_loop().run_until_complete(dev.setup())
     try:
         simple_server_loop(
-            {"novatech409b": dev}, bind_address_from_args(args), args.port)
+            {"novatech409b": dev}, common_args.bind_address_from_args(args), args.port)
     finally:
         dev.close()
 
